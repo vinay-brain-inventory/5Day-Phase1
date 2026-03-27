@@ -1,0 +1,15 @@
+{
+  "name": "memoryleak-workerthread",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "pool:demo": "node worker-pool-demo.js",
+    "server:leaky": "node server-leaky.js",
+    "server:fixed": "node server-fixed.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

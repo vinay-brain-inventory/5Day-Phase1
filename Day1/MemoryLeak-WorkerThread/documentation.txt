@@ -1,0 +1,48 @@
+Day 1
+
+Task 3: worker thread pool
+
+Install
+cd Day1/MemoryLeak-WorkerThread
+npm i
+
+Run demo
+npm run pool:demo
+
+API
+const { WorkerPool } = require("./worker-pool")
+const pool = new WorkerPool({ size: 2, queueLimit: 10 })
+pool.exec({ n: 35 }).then(console.log)
+
+Back-pressure
+If pending + queued reaches queueLimit, exec rejects with "queue full".
+
+
+Task 4: memory leak
+
+Leaky server
+node --inspect server-leaky.js
+
+Generate load (new keys each time)
+for i in $(seq 1 5000); do curl -s "http://localhost:3000/leak?kb=64" >/dev/null; done
+curl -s http://localhost:3000/stats
+
+Heap snapshots
+Open chrome://inspect
+Take snapshot at start
+Run the load loop
+Take snapshot again
+
+Root cause
+The /leak endpoint stores every request in a Map with a unique key and never deletes anything. The Map stays strongly referenced, so those buffers are not freed.
+
+Fixed server
+node --inspect server-fixed.js
+
+Generate load (same key reused, plus cleanup)
+for i in $(seq 1 5000); do curl -s "http://localhost:3000/cache?kb=64&key=a" >/dev/null; done
+curl -s http://localhost:3000/stats
+
+Fix applied
+Bound the cache with TTL + max items. Also allow reuse of a stable key so repeated requests don't create unbounded entries.
+
