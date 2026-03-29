@@ -1,0 +1,13 @@
+2026-03-27 17:40:07.832 IST [28426] LOG:  starting PostgreSQL 12.22 (Ubuntu 12.22-0ubuntu0.20.04.4) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0, 64-bit
+2026-03-27 17:40:07.832 IST [28426] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-03-27 17:40:07.833 IST [28426] FATAL:  could not create lock file "/var/run/postgresql/.s.PGSQL.5433.lock": Permission denied
+2026-03-27 17:40:07.833 IST [28426] LOG:  database system is shut down
+2026-03-27 17:40:15.036 IST [28483] LOG:  starting PostgreSQL 12.22 (Ubuntu 12.22-0ubuntu0.20.04.4) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0, 64-bit
+2026-03-27 17:40:15.036 IST [28483] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-03-27 17:40:15.037 IST [28483] LOG:  listening on Unix socket "/home/vinay/dev/5Day-Phase1/Day2/task-management-api/.pgsocket/.s.PGSQL.5433"
+2026-03-27 17:40:15.043 IST [28483] LOG:  could not bind socket for statistics collector: Cannot assign requested address
+2026-03-27 17:40:15.043 IST [28483] LOG:  disabling statistics collector for lack of working socket
+2026-03-27 17:40:15.043 IST [28483] WARNING:  autovacuum not started because of misconfiguration
+2026-03-27 17:40:15.043 IST [28483] HINT:  Enable the "track_counts" option.
+2026-03-27 17:40:15.044 IST [28484] LOG:  database system was shut down at 2026-03-27 17:40:05 IST
+2026-03-27 17:40:15.047 IST [28483] LOG:  database system is ready to accept connections

@@ -1,0 +1,286 @@
+{
+  "info": {
+    "name": "Day2 Task Management API",
+    "_postman_id": "c0f3d2b0-9bd7-4e6c-9d72-9e66c66a8c2f",
+    "description": "Express + PostgreSQL Tasks API with JWT auth and refresh rotation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/login (happy)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('tokens present', function () {",
+                  "  pm.expect(body).to.have.property('accessToken');",
+                  "  pm.expect(body).to.have.property('refreshToken');",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login (400 validation)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 ValidationError', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh (happy rotation)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/auth/refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh (401 with revoked/old token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshTokenOld}}\"\n}" },
+            "url": "{{baseUrl}}/auth/refresh"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Capture current refresh token as \"old\" then rotate once, then try using old.",
+                  "if (!pm.collectionVariables.get('refreshTokenOld')) {",
+                  "  pm.collectionVariables.set('refreshTokenOld', pm.collectionVariables.get('refreshToken'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 Unauthorized', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "GET /tasks (401 missing token)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/tasks" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });"] }
+            }
+          ]
+        },
+        {
+          "name": "POST /tasks (happy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Write Day 2 API\",\n  \"description\": \"Build tasks endpoints\",\n  \"status\": \"todo\",\n  \"dueDate\": \"2026-03-31\"\n}" },
+            "url": "{{baseUrl}}/tasks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('taskId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /tasks (400 validation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"\"\n}" },
+            "url": "{{baseUrl}}/tasks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('400 ValidationError', function () { pm.response.to.have.status(400); });"] }
+            }
+          ]
+        },
+        {
+          "name": "GET /tasks (happy, paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/tasks?limit=10&offset=0&status=todo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] }
+            }
+          ]
+        },
+        {
+          "name": "GET /tasks/:id (happy)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] }
+            }
+          ]
+        },
+        {
+          "name": "PUT /tasks/:id (happy full update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Write Day 2 API (updated)\",\n  \"description\": \"Full update\",\n  \"status\": \"in_progress\",\n  \"dueDate\": \"2026-04-01\"\n}" },
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /tasks/:id (happy partial update)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"done\"\n}" },
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /tasks/:id (happy)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('204 No Content', function () { pm.response.to.have.status(204); });"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

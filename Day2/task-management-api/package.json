@@ -1,0 +1,23 @@
+{
+  "name": "task-management-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Clean Express + PostgreSQL Task Management API (Day 2).",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^7.1.0",
+    "pg": "^8.12.0",
+    "pino": "^9.3.2",
+    "pino-http": "^10.3.0",
+    "zod": "^3.23.8"
+  }
+}
